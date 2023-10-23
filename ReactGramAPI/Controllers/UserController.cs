@@ -43,7 +43,7 @@ public class UserController : ControllerBase
 
     [HttpGet]
     [Authorize]
-    [Route("")]
+    [Route("profile")]
     public IActionResult GetCurrentUser()
     {
         ClaimsIdentity identity = HttpContext.User.Identity as ClaimsIdentity;
@@ -123,7 +123,7 @@ public class UserController : ControllerBase
         User user = _userService.GetCurrentUser(identity);
         //Executando método de deletar usuário:
         await _userService.DeleteCurrentUser(user);
-        //Retornando resposta ao usuário (ação de no content - código 204):
+        //Retornando resposta ao usuário (ação de "no content" - código 204):
         return NoContent();
     }
 }
