@@ -1,27 +1,35 @@
 ﻿using AutoMapper;
+using Azure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using ReactGramAPI.Data;
 using ReactGramAPI.Data.Dtos;
 using ReactGramAPI.Models;
+using System.Security.Claims;
+using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace ReactGramAPI.Services;
 
 public class UserService
 {
+    private ReactgramDbContext _context;
     private IMapper _mapper;
     private UserManager<User> _userManager;
     private SignInManager<User> _signInManager;
     private TokenService _tokenService;
 
-    public UserService(IMapper mapper, UserManager<User> userManager, SignInManager<User> signInManager, TokenService tokenService)
+    public UserService(IMapper mapper, UserManager<User> userManager, SignInManager<User> signInManager, TokenService tokenService, ReactgramDbContext context)
     {
         _mapper = mapper;
         _userManager = userManager;
         _signInManager = signInManager;
         _tokenService = tokenService;
+        _context = context;
     }
 
     //Método para cadastrar um usuário no banco de dados:
-    public async Task<TokenInfo> RegisterUser(CreateUserDto userDto)
+    public async Task<TokenInfo> RegisterUser(RegisterUserDto userDto)
     {
         //Convertendo de CreateUserDto para User:
         User user = _mapper.Map<User>(userDto);
@@ -38,7 +46,7 @@ public class UserService
         return token;
     }
 
-    public async Task<TokenInfo> LoginUser(LoginUserDto userDto)
+    public async Task<ReadAuthenticationUserDto> LoginUser(LoginUserDto userDto)
     {
         //Aguardando resultado da requisição para Logar:
         SignInResult result = await _signInManager.PasswordSignInAsync(userDto.Username, userDto.Password, false, false);
@@ -53,13 +61,59 @@ public class UserService
             .Users
             .FirstOrDefault(user => userDto.Username.ToUpper() == user.NormalizedUserName); //Colocamos ambos os criterios de comparação em letra maiuscula para evitar problemas
         //Verificando se foi encontrado usuário de fato (apenas para que compilador não reclame):
-        if(user == null)
+        if (user == null)
         {
             throw new Exception("Usuário não autenticado");
         }
         //Se deu tudo certo, executando método de gerar Token para usuário cadastrado:
         TokenInfo token = _tokenService.GenerateToken(user);
+        //Gerando resposta da requisição
+        ReadAuthenticationUserDto response = _mapper.Map<ReadAuthenticationUserDto>(user);
+        response.TokenInfo = token;
+        //ReadUserDto response = new UserLoggedInfo(user.Id, token, user.ProfileImage);
         //Retornando token:
-        return token;
+        return response;
+    }
+
+    public User GetCurrentUser(ClaimsIdentity identity)
+    {
+        var id = identity.FindFirst("id").Value;
+        var user = _context.Users.FirstOrDefault(user => user.Id == id);
+        if (user == null)
+        {
+            throw new Exception("Usuário não autenticado");
+        }
+        return user;
+    }
+
+    public ReadUserDto GetUserById(string id)
+    {
+        var user = _context.Users.FirstOrDefault(user => user.Id == id);
+        if(user == null)
+        {
+            throw new Exception("Usuário não encontrado");
+        }
+        ReadUserDto userDto = _mapper.Map<ReadUserDto>(user); 
+        return userDto;
+    }
+
+    public async Task<User> UpdateUser(User user, UpdateUserDto userDto)
+    {
+        _mapper.Map(userDto, user);
+        IdentityResult result = await _userManager.UpdateAsync(user);
+        if(!result.Succeeded)
+        {
+            throw new Exception("Algo deu errado");
+        }
+        return user;
+    }
+
+    public async Task DeleteCurrentUser(User user)
+    {
+        IdentityResult result = await _userManager.DeleteAsync(user);
+        if(!result.Succeeded)
+        {
+            throw new Exception("Algo deu errado");
+        } 
     }
 }
