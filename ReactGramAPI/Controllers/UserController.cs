@@ -57,11 +57,19 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Route("")]   
+    [Route("")]
     public IActionResult GetUserById(string id)
     {
-        ReadUserDto userInfo = _userService.GetUserById(id);
-        return Ok(userInfo);
+        User user = _userService.GetUserById(id);
+        ReadUserDto userDto = _mapper.Map<ReadUserDto>(user);
+        return Ok(userDto);
+    }
+
+    [HttpGet("search")]
+    public IActionResult SearchByUsername([FromQuery] string username = "")
+    {
+        List<User> users = _userService.SearchByUsername(username);
+        return Ok(_mapper.Map<List<ReadUserDto>>(users));
     }
 
     [HttpPut]

@@ -18,6 +18,9 @@ namespace ReactGramAPI.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "7.0.12")
+                .HasAnnotation("Proxies:ChangeTracking", false)
+                .HasAnnotation("Proxies:CheckEquality", false)
+                .HasAnnotation("Proxies:LazyLoading", true)
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -155,6 +158,83 @@ namespace ReactGramAPI.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ReactGramAPI.Models.Comment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PhotoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PhotoId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Comment", (string)null);
+                });
+
+            modelBuilder.Entity("ReactGramAPI.Models.Like", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("PhotoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PhotoId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Like", (string)null);
+                });
+
+            modelBuilder.Entity("ReactGramAPI.Models.Photo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Photo", (string)null);
+                });
+
             modelBuilder.Entity("ReactGramAPI.Models.User", b =>
                 {
                     b.Property<string>("Id")
@@ -275,6 +355,67 @@ namespace ReactGramAPI.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("ReactGramAPI.Models.Comment", b =>
+                {
+                    b.HasOne("ReactGramAPI.Models.Photo", "Photo")
+                        .WithMany("Comments")
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ReactGramAPI.Models.User", "User")
+                        .WithMany("Comments")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("Photo");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ReactGramAPI.Models.Like", b =>
+                {
+                    b.HasOne("ReactGramAPI.Models.Photo", "Photo")
+                        .WithMany("Likes")
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ReactGramAPI.Models.User", "User")
+                        .WithMany("Likes")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("Photo");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ReactGramAPI.Models.Photo", b =>
+                {
+                    b.HasOne("ReactGramAPI.Models.User", "User")
+                        .WithMany("Photos")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ReactGramAPI.Models.Photo", b =>
+                {
+                    b.Navigation("Comments");
+
+                    b.Navigation("Likes");
+                });
+
+            modelBuilder.Entity("ReactGramAPI.Models.User", b =>
+                {
+                    b.Navigation("Comments");
+
+                    b.Navigation("Likes");
+
+                    b.Navigation("Photos");
                 });
 #pragma warning restore 612, 618
         }

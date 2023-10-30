@@ -18,7 +18,7 @@ builder.Services.AddControllers();
 var connectionString = builder.Configuration["ConnectionStrings:ReactgramConnection"];
 builder.Services.AddDbContext<ReactgramDbContext>(opts =>
 {
-    opts.UseSqlServer(connectionString);
+    opts.UseLazyLoadingProxies().UseSqlServer(connectionString);
 });
 //Serviço do AutoMapper (utilização de DTOs):
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());

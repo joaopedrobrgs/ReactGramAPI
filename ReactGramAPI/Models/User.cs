@@ -10,4 +10,13 @@ public class User : IdentityUser
 
     public User() : base() { }
 
+    //Tabelas/Modelos com os quais se relaciona:
+    //Relação 1 : n
+    public virtual ICollection<Photo>? Photos { get; set; }
+    //Relação 1 : n
+    public virtual ICollection<Comment>? Comments { get; set; }
+    //Relação 1 : n
+    public virtual ICollection<Like>? Likes { get; set; }
+
+
 }

@@ -8,6 +8,7 @@ using ReactGramAPI.Models;
 using System.Security.Claims;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.EntityFrameworkCore;
 
 namespace ReactGramAPI.Services;
 
@@ -86,15 +87,14 @@ public class UserService
         return user;
     }
 
-    public ReadUserDto GetUserById(string id)
+    public User GetUserById(string id)
     {
         var user = _context.Users.FirstOrDefault(user => user.Id == id);
         if(user == null)
         {
             throw new Exception("Usuário não encontrado");
         }
-        ReadUserDto userDto = _mapper.Map<ReadUserDto>(user); 
-        return userDto;
+        return user;
     }
 
     public async Task<User> UpdateUser(User user, UpdateUserDto userDto)
@@ -115,5 +115,23 @@ public class UserService
         {
             throw new Exception("Algo deu errado");
         } 
+    }
+
+    internal List<User> SearchByUsername(string username)
+    {
+        try
+        {
+            List<User> users = _context.Users.FromSqlRaw($"SELECT * FROM AspNetUsers WHERE USERNAME LIKE '%{username}%'").ToList();
+            if (users.Count == 0)
+            {
+                throw new Exception("Nenhum resultado encontrado");
+            }
+            return users;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+
     }
 }
